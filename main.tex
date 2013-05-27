@@ -1,0 +1,223 @@
+%
+% Bachelor Thesis
+% Sven Hodapp
+%
+
+
+% -----------
+% 1. Präambel
+% -----------
+
+
+% Allgemeine Einstellungen
+% ------------------------
+\documentclass[
+	pdftex,%              PDFTex verwenden da wir ausschliesslich ein PDF erzeugen.
+	a4paper,%             Wir verwenden A4 Papier.
+	oneside,%             Einseitiger Druck.
+	12pt,%                Grosse Schrift, besser geeignet für A4.
+	halfparskip,%         Halbe Zeile Abstand zwischen Absätzen.
+	%chapterprefix,%       Kapitel mit 'Kapitel' anschreiben.
+	headsepline,%         Linie nach Kopfzeile.
+	footsepline,%         Linie vor Fusszeile.
+	bibtotocnumbered,%    Literaturverzeichnis im Inhaltsverzeichnis nummeriert einfügen.
+	idxtotoc%             Index ins Inhaltsverzeichnis einfügen.
+]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[german]{babel}   % deutsche Silbentrennung
+\selectlanguage{german}   % damit Table Of Contents Inhaltsverzeichnis genannt wird
+
+\usepackage{geometry}   % Seitenränder einstellbar
+\usepackage{textcomp}   % Sonderzeichen, wie Eurosymbol
+\usepackage[hyphens]{url} % URLs korrekt umbrechen.
+
+
+
+% Bilder, Farben, farbige Tabellen
+% --------------------------------
+\usepackage{graphicx, color, colortbl}
+\usepackage[svgnames]{xcolor} % Required to specify font color
+\usepackage{longtable}
+\usepackage{lscape}
+\usepackage{array}       % Erweiterte Tabelleneigenschaften.
+%\usepackage{floatflt}   % Bild kann von Text umflossen werden.
+
+
+
+% Palatino Schrift
+% ----------------
+%\usepackage[T1]{fontenc}
+%\usepackage[osf]{mathpazo}   % osf aktiviert Mediävalziffern/Minuskelziffern
+
+
+
+% Syntax-Highlighting
+% -------------------
+% Src: http://tihlde.org/~eivindw/latex-listings-for-scala/
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\usepackage{listings}
+
+% "define" Scala
+\lstdefinelanguage{Scala}{
+  morekeywords={abstract,case,catch,class,def,%
+    do,else,extends,false,final,finally,%
+    for,if,implicit,import,match,mixin,%
+    new,null,object,override,package,%
+    private,protected,requires,return,sealed,%
+    super,this,throw,trait,true,try,%
+    type,val,var,while,with,yield},
+  otherkeywords={=>,<-,<\%,<:,>:,\#,@},
+  sensitive=true,
+  morecomment=[l]{//},
+  morecomment=[n]{/*}{*/},
+  morestring=[b]",
+  morestring=[b]',
+  morestring=[b]"""
+}
+
+% src: http://lenaherrmann.net/2010/05/20/
+%      javascript-syntax-highlighting-in-the-latex-listings-package
+\lstdefinelanguage{JavaScript}{
+  keywords={
+    typeof, new, true, false, catch, function, return, null,
+    catch, switch, var, if, in, while, do, else, case, break
+  },
+  ndkeywords={class, export, boolean, throw, implements, import, this},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]"
+}
+
+\lstset{
+  frame=tb,
+  language=bash,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\fontsize{10}{11}\ttfamily},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=2,
+  extendedchars=\true,
+  inputencoding=utf8,
+  escapeinside={\%*}{*)}  % http://tex.stackexchange.com/questions/24528/
+}
+
+
+% Sonstige Pakete
+% ---------------
+%\usepackage{anysize}   % Seitenränder verändern
+%\usepackage{setspace}   % 1.5em Zeilenabstand \begin{onehalfspacing}
+\usepackage{bibgerm}   % Anzeigestil des Literaturverzeichnis (gerabbrv)
+\usepackage{paralist}  % Individualisierte Aufzählungen
+
+
+% Global Variables
+% ----------------
+
+\newcommand{\thema}{Firewall unter Debian 6.0 Squeeze}
+\newcommand{\untertitel}{Mit iptables in einer DMZ-Umgebung}
+\newcommand{\schlagworte}{iptables, firewalls, dmz, security, linux, debian}
+\newcommand{\autor}{Marc Bumiller, Sven Hodapp}
+
+
+% Title Page
+% ----------
+% (thanks to: http://www.latextemplates.com/template/minimalist-book-title-page)
+
+\newcommand*{\plogo}{\fbox{$\mathcal{HTWG}$}} % Generic publisher logo
+
+\newcommand*{\titleTH}{\begingroup % Create the command for including the title page in the document
+\raggedleft % Right-align all text
+\vspace*{\baselineskip} % Whitespace at the top of the page
+
+{\Large \autor}\\[0.167\textheight] % Author name
+
+{\LARGE\bfseries ITSEC: Laborbericht}\\[\baselineskip] % First part of the title, if it is unimportant consider making the font size smaller to accentuate the main title
+
+{\textcolor{Red}{\Huge \thema}}\\[\baselineskip] % Main title which draws the focus of the reader
+
+{\Large \textit{\untertitel}}\par % Tagline or further description
+
+\vfill % Whitespace between the title block and the publisher
+
+{\large Hochschule Konstanz \plogo}\par % Publisher and logo
+
+\vspace*{3\baselineskip} % Whitespace at the bottom of the page
+\endgroup}
+
+
+% PDF Eigenschaften
+% -----------------
+\usepackage
+[
+	colorlinks=false,
+	bookmarks = true,
+	pdftitle={\thema},
+	pdfauthor={\autor},
+	pdfsubject={\untertitel},
+	pdfkeywords={\schlagworte},
+	urlcolor=blue,
+	pdfstartview=FitH
+]{hyperref}
+
+
+
+
+
+% --------------------
+% 2. Dokumenten Anfang
+% --------------------
+
+\begin{document}
+
+\pagenumbering{roman}
+
+% Deckblatt
+% ---------
+
+\pagestyle{empty}
+\titleTH
+\newpage
+
+
+
+% Inhaltsverzeichnis anzeigen
+% ---------------------------
+\tableofcontents
+\newpage
+
+\pagenumbering{arabic}
+
+% ---------
+% 3. Inhalt
+% ---------
+
+\include{chapters/1-einleitung}
+
+% \begin{appendix}
+%   \include{chapters/a-setup}
+% \end{appendix}
+
+\addcontentsline{toc}{section}{Literaturverzeichnis}
+\bibliographystyle{apalike}  % apalike
+\bibliography{bib/references}
+
+%\listoffigures
+%\listoftables
+
+\end{document}
+
