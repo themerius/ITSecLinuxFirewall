@@ -18,32 +18,278 @@ Die Einleitung \cite{iptables}
 
 \subsection{Software}
 
+dnsutils (für nslookup)
+
 \subsection{Netzwerkadapter}
+
+\subsubsection{fw1: Extranet $\Longleftrightarrow$ DMZ}
+
+Ist die Firewall zwischen Extranet $\Longleftrightarrow$ DMZ.
+Die Konfigurationsdatei liegt in {\tt /etc/network/interfaces}.
+
+\paragraph{eth0} Verbindung zur DMZ.
+
+\begin{lstlisting}[label=lst:dmz:eth0,caption={Netzwerkadapter eth0 Konfiguration.}]
+allow-hotplug eth0
+iface eth0 inet static
+    address 192.168.40.250
+    netmask 255.255.255.0
+    broadcast 192.168.40.255
+    dns-search firma-a.f223
+\end{lstlisting}
+
+\paragraph{eth1} Verbindung zum Extranet bzw. Internet.
+
+\begin{lstlisting}[label=lst:extranet:eth1,caption={Netzwerkadapter eth1 Konfiguration.}]
+allow-hotplug eth1
+iface eth1 inet static
+    address 10.1.0.131
+    netmask 255.255.255.0
+    broadcast 10.1.0.0
+\end{lstlisting}
 
 \subsection{Bootskript}
 
+Debian verwendet das sogenannte \emph{Init Script LSB}\footnote{
+\url{http://wiki.debian.org/LSBInitScripts}}, welches Unterstützung
+für \emph{dependency based boot sequencing}\footnote{
+\url{http://wiki.debian.org/LSBInitScripts/DependencyBasedBoot}
+} bietet. Das bedeutet, dass
+die Programme die beim Aufstarten des Betriebssystems in einer idealen
+Reihenfolge angeordnet werden, so dass es auch keine unangenehme Effekte
+durch Abhängigkeiten der Programme untereinander entstehen.
 
+Diese Bootskripte werden in {\tt /etc/init.d/} als Konfigurationsdateien
+abgelegt und beginnen mit wohldefinierten Kopfzeilen, wie in Listing
+\ref{lst:lsb-header} gezeigt. In diesen Zeilen können die Abhängigkeiten
+konfiguriert werden.
+
+\begin{lstlisting}[label=lst:lsb-header,caption={Init Script LSB: Kopfzeilen.}]
+### BEGIN INIT INFO
+# Provides:          scriptname
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start daemon at boot time
+# Description:       Enable service provided by daemon.
+### END INIT INFO
+\end{lstlisting}
+
+Wenn \emph{dependency-based booting} aktiviert ist, wird ein Daemon mit seinem
+Startupskript aus {\tt /etc/init.d/} mit {\tt insserv}\footnote{
+\emph{Vor} Debian 6.0 wird {\tt update-rc.d} verwendet.
+} gestartet:
+
+\begin{verbatim}
+insserv mydaemon_script
+\end{verbatim}
+
+Nach den Kopfzeilen kommt das eigentliche Skript, welches z.B. mittels
+{\tt iptables} die Firewall konfiguriert, aber auch beliebige andere Programme
+und Dienste können somit gestartet werden.
+
+\begin{lstlisting}[label=lst:lsb-script,caption={Init Script LSB: Eigentliches Skript.}]
+case "$1" in
+    start)
+        # Startup stuff
+        echo "Daemon started."
+        ;;
+    stop)
+        # Shutdown this service
+        echo "Daemon stopped."
+        ;;
+    restart)
+        # Restart this service
+        echo "Daemon restarted."
+        ;;
+    *)
+        # The default case
+        echo "Usage $0 {start|stop|restart}"
+        ;;
+esac
+\end{lstlisting}
 
 \section{Firewall Konfiguration}
 
-\subsection{Extranet $\Longleftrightarrow$ DMZ}
+\subsection{fw1: Extranet $\Longleftrightarrow$ DMZ}
 
-\paragraph{Anforderung} Was ist das Ziel, was diese Konfiguration erreichen
-will?
+\subsubsection{Initialisierung}
 
-\paragraph{Konfiguration} Die eigentliche Konfigurationsdatei mit Erklärung
-und wo sie abgespeichert wurde. \tt{/etc/firewall.sh}
+\paragraph{Anforderung} Grundlegende Initialisierung der Firewall, d.h.
+sie nimmt alle Pakete an. Zugriff auf Rechner innerhalb der DMZ ist ohne
+weitere Regeln jedoch \emph{nicht} möglich, also \emph{keine} Weiterreichung von
+Pakten.
 
-\begin{lstlisting}[label=lst-x,caption={Benennung.}]
-#/bin/bash
-echo "hello world"
+\paragraph{Konfiguration} Diese Konfigurationsdatei aus Listing \ref{lst:init}
+befindet sich in {\tt /etc/init.d/firewall-external.sh}.
+Das Skript wird mit dem Befehl {\tt chmod u+x firewall-external.sh}
+ausführbar gemacht.
+
+\begin{lstlisting}[label=lst:init,caption={Basis Firewall Bootskript.}]
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          external firewall
+# Required-Start:    $local_fs $remote_fs $syslog $network
+# Required-Stop:     $local_fs $remote_fs $syslog $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: External firewall
+# Description:       External firewall (sh, mb)
+### END INIT INFO
+
+case "$1" in
+    start)
+        # clear
+        iptables -F
+        iptables -t nat -F
+        iptables -t mangle -F
+        iptables -x
+
+        # defaults
+        iptables -P INPUT ACCEPT
+        iptables -P OUTPUT ACCEPT
+        iptables -P FORWARD ACCEPT
+
+        # loopback
+        iptables -A INPUT -i lo -j ACCEPT
+        iptables -A OUTPUT -o lo -j ACCEPT
+
+        # stateful rules (after that, only need to allow NEW connections)
+        iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+        iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+        iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+        # drop invalid state packets
+        iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
+        iptables -A OUTPUT -m conntrack --ctstate INVALID -j DROP
+        iptables -A FORWARD -m conntrack --ctstate INVALID -j DROP
+
+        echo "Firewall started."
+        ;;
+
+    stop)
+        iptables -F
+        iptables -P INPUT ACCEPT
+        iptables -P OUTPUT ACCEPT
+
+        echo "Firewall disabled."
+        ;;
+
+    restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+
+    *)
+        echo "Usage $0 {start|stop|restart}"
+        ;;
+
+esac
 \end{lstlisting}
 %\lstinputlisting[language=Python, firstline=37, lastline=45]{source_filename.py}
 
-\paragraph{Test} Wie wird die Konfiguration getestset? Wurde die Anforderung
-erfüllt?
+\paragraph{Test} Über die virtuelle Maschine {\tt lap1.internet.f223} wird
+via {\tt ping} getestet, ob eine Verbindung zwischen {\tt lap1} und {\tt fw1}
+möglich ist.
 
-\subsection{DMZ $\Longleftrightarrow$ Intranet}
+
+\subsubsection{Weiterleitung auf Webserver}
+
+\paragraph{Anforderung} Pakete sollten vom Extranet über die Firewall an
+den Webserver {\tt srv1}, der auf Port 80 hört, weitergeleitet werden.
+
+\paragraph{Konfiguration} Das Listing \ref{lst:webserver} wird als
+Delta zum Skript aus Listing \ref{lst:init} dargestellt.
+Es wird die Option {\tt DNAT} gewählt, womit das Ziel umgebogen wird.
+Die Firewall sieht von Außen nun aus wie der Webserver.
+
+\begin{lstlisting}[label=lst:webserver,caption={Webserver Forwarding.}]
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          external firewall
+# Required-Start:    $local_fs $remote_fs $syslog $network
+# Required-Stop:     $local_fs $remote_fs $syslog $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: External firewall
+# Description:       External firewall (sh, mb)
+### END INIT INFO
+
+SRV_IP=192.168.40.1
+FW2_IP=192.168.40.240
+DMZ_IP=192.168.40.250
+EXT_IP=10.1.0.131
+
+forwardToSrv()
+{
+    PORT=$1
+    iptables -t nat -A PREROUTING -p tcp -i eth1 --dport $PORT -j DNAT --to $SRV_IP
+}
+
+case "$1" in
+    start)
+        # clear
+        iptables -F
+        iptables -t nat -F
+        iptables -t mangle -F
+        iptables -x
+
+        # defaults
+        iptables -P INPUT ACCEPT
+        iptables -P OUTPUT ACCEPT
+        iptables -P FORWARD ACCEPT
+
+        # enable Forwarding
+        echo "1" > /proc/sys/net/ipv4/ip_forward
+
+        # loopback
+        iptables -A INPUT -i lo -j ACCEPT
+        iptables -A OUTPUT -o lo -j ACCEPT
+
+        # stateful rules (after that, only need to allow NEW connections)
+        iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+        iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+        iptables -A FORWARD -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+        # drop invalid state packets
+        iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
+        iptables -A OUTPUT -m conntrack --ctstate INVALID -j DROP
+        iptables -A FORWARD -m conntrack --ctstate INVALID -j DROP
+
+        # port Forwarding from extranet
+        forwardToSrv  80  # http
+        forwardToSrv 443  # https
+
+        echo "Firewall started."
+        ;;
+
+    stop)
+        iptables -F
+        iptables -P INPUT ACCEPT
+        iptables -P OUTPUT ACCEPT
+
+        echo "Firewall disabled."
+        ;;
+
+    restart)
+        $0 stop
+        sleep 1
+        $0 start
+        ;;
+
+    *)
+        echo "Usage $0 {start|stop|restart}"
+        ;;
+
+esac
+\end{lstlisting}
+
+\paragraph{Test} Über den Browser des Client-Rechner {\tt lap1},
+der sich im Extranet befindet.
+
+\subsection{fw2: DMZ $\Longleftrightarrow$ Intranet}
 
 
 
