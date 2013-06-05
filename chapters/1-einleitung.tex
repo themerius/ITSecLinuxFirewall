@@ -4,34 +4,71 @@ Die Einleitung \cite{iptables}
 
 \subsection{Begriffsdefinitionen}
 
-Masquarading
+Masquarading? Hier oder im Konfig Kapitel?
 
-Connection Tracking
+Connection Tracking? Hier oder im Konfig Kapitel?
 
 \paragraph{DMZ}
-
+Wenn als Computernetzwerkbegriff verstanden ist die
+\emph{demilitarisierte Zone} ein Bereich in dem Dienste einer Firma die nach Außen,
+also z.B. das Internet oder Extranet, angeboten werden. Diese Dienste sollen
+vom eigentelichen LAN in einem abgeschotteten Bereich laufen, so dass
+beispielsweise die Mitarbeiterrechner sicher sind.
 
 
 \section{Versuchsaufbau}
 
-\subsection{Problembeschreibung}
+Ziel ist es das Firmen-LAN sowie die zugehörige DMZ durch die
+{\tt iptables} Linux-Firewall abzusichern.
 
+\begin{figure}[h!]
+  \centering
+    \includegraphics[width=0.9\textwidth]{figures/Netzplan.jpg}
+  \caption{Netzplan des Versuchsaufbaus.\cite{labor}}
+  \label{fig.netzplan}
+\end{figure}
+
+Dazu sind im Versuchsaufbau für jeden der in Abbildung 
+\ref{fig.netzplan} abgebildeten Rechner
+eine virtuelle Maschine bereitgestellt---dies ermöglicht leichteres
+Testen.
+
+Wir haben uns dazu entschieden, das Netzwerk der \emph{Firma A} aufzubauen.
+Firma B bleibt unangetastet, und ist somit vollständig vorkonfiguriert,
+was ein leichteres Testen ermöglicht.\cite{labor}
 
 
 \section{Linux Konfiguration}
 
-\subsection{Software}
+Zunächst müssen zwei Debian 6.0 Maschinen,
+mit der minimalen Installation, eingerichtet werden.
+Diese repräsentieren die Firewallmaschinen {\tt fw1} und {\tt fw2} aus
+Abbildung \ref{fig.netzplan}.
+Es wurde noch weitere Software installiert,
+beschrieben in Kapitel \ref{sec.software}.
+Die genaue Netzwerkadapterkonfiguration ist in Kapitel \ref{sec.netzwerk}
 
-iptstate---IPTables State Top.
+\subsection{Software}\label{sec.software}
 
-resolvconf---Nameserver information handler.
+Zusätzliche Software wurde via {\tt apt-get}, Debians Paketmanager,
+installiert.
 
-\subsection{Netzwerkadapter}
+\begin{itemize}
+    \item iptables
+    \item iptstate---IPTables State Top.
+    \item resolvconf---Nameserver information handler.
+\end{itemize}
 
-\subsubsection{fw1: Extranet $\Longleftrightarrow$ DMZ}
 
-Ist die Firewall zwischen Extranet $\Longleftrightarrow$ DMZ.
-Die Konfigurationsdatei liegt in {\tt /etc/network/interfaces}.
+\subsection{Netzwerkadapter}\label{sec.netzwerk}
+
+Die Netzweradapter wurden gemäß der in Abbildung \ref{fig.netzplan}
+gezeigten IP-Adressen konfiguriert.
+Die Konfigurationsdatei dazu liegt in {\tt /etc/network/interfaces}.
+
+\subsubsection{Extranet $\Longleftrightarrow$ DMZ}
+
+Ist Firewall {\tt fw1} die zwischen Extranet $\Longleftrightarrow$ DMZ sitzt.
 
 \paragraph{eth0} Verbindung zur DMZ.
 
@@ -56,10 +93,9 @@ iface eth1 inet static
 \end{lstlisting}
 
 
-\subsubsection{fw2: DMZ $\Longleftrightarrow$ Intranet}
+\subsubsection{DMZ $\Longleftrightarrow$ Intranet}
 
-Ist die Firewall zwischen DMZ $\Longleftrightarrow$ Intranet.
-Die Konfigurationsdatei liegt in {\tt /etc/network/interfaces}.
+Ist Firewall {\tt fw2} die zwischen DMZ $\Longleftrightarrow$ Intranet sitzt.
 
 \paragraph{eth0} Verbindung zum Intranet.
 
@@ -159,9 +195,14 @@ case "$1" in
 esac
 \end{lstlisting}
 
+
+
 \section{Firewall Konfiguration}
 
-\subsection{fw1: Extranet $\Longleftrightarrow$ DMZ}
+\subsection{Extranet $\Longleftrightarrow$ DMZ}
+
+Ist Firewall {\tt fw1} die zwischen Extranet $\Longleftrightarrow$ DMZ sitzt.
+
 
 \subsubsection{Initialisierung}
 
@@ -173,7 +214,9 @@ Pakten.
 \paragraph{Konfiguration} Diese Konfigurationsdatei aus Listing \ref{lst:init}
 befindet sich in {\tt /etc/init.d/firewall-external.sh}.
 Das Skript wird mit dem Befehl {\tt chmod u+x firewall-external.sh}
-ausführbar gemacht.
+ausführbar gemacht. Mit {\tt insserv firewall-external.sh}
+wird das Skript auch beim Aufstarten der Maschine automatisch ausgeführt,
+und damit die Firewall aktiviert.
 
 \begin{lstlisting}[label=lst:init,caption={Basis Firewall Bootskript.}]
 #!/bin/sh
@@ -253,7 +296,7 @@ Es laufen HTTP auf Port 80, HTTPS auf Port 443 und SMTP auf Port 25.
 \paragraph{Konfiguration} Das Listing \ref{lst:webserver} ist das Skript
 aus Listing \ref{lst:init}, entsprechend erweitert.
 Es wird die Option {\tt DNAT} gewählt, womit das Ziel umgebogen wird.
-Die Firewall sieht von Außen nun aus wie der Webserver.
+Die Firewall sieht von Außen nun aus wie der jeweilige Server.
 
 \begin{lstlisting}[label=lst:webserver,caption={Web- und Mailserver Forwarding.}]
 #!/bin/sh
@@ -445,7 +488,10 @@ case "$1" in
 esac
 \end{lstlisting}
 
-\subsection{fw2: DMZ $\Longleftrightarrow$ Intranet}
+
+\subsection{DMZ $\Longleftrightarrow$ Intranet}
+
+Ist Firewall {\tt fw2} die zwischen DMZ $\Longleftrightarrow$ Intranet sitzt.
 
 \subsubsection{Verbindung von pc01 nach inet1}
 
