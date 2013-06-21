@@ -1,8 +1,8 @@
 \section{Firewall Konfiguration}
 
-\subsection{Extranet $\Longleftrightarrow$ DMZ}
+\subsection{\fwa}
 
-Ist Firewall {\tt fw1} die zwischen Extranet $\Longleftrightarrow$ DMZ sitzt.
+Ist Firewall {\tt fw1} die zwischen \fwa sitzt.
 
 
 \subsubsection{Initialisierung}
@@ -369,9 +369,6 @@ case "$1" in
         # allow forwarding from lan to extranet
         iptables -A FORWARD -i $DMZ_DEV -o $EXT_DEV -s $LAN_NET -d $EXT_NET -m conntrack --ctstate NEW -j ACCEPT
 
-        # route packets from srv into lan to fw2 (because srv1 has no route to lan)
-        iptables -A FORWARD -i $DMZ_DEV -o $DMZ_DEV -s $SRV_IP -d $LAN_NET -j ACCEPT
-
         # allow dns from srv to extranet
         iptables -A FORWARD -i $DMZ_DEV -o $EXT_DEV -s $SRV_IP -d $EXT_DNS -p tcp --dport 53 -m conntrack --ctstate NEW -j ACCEPT
         iptables -A FORWARD -i $DMZ_DEV -o $EXT_DEV -s $SRV_IP -d $EXT_DNS -p udp --dport 53 -m conntrack --ctstate NEW -j ACCEPT
@@ -411,9 +408,9 @@ esac
 \end{lstlisting}
 
 
-\subsection{DMZ $\Longleftrightarrow$ Intranet}
+\subsection{\fwb}
 
-Ist Firewall {\tt fw2} die zwischen DMZ $\Longleftrightarrow$ Intranet sitzt.
+Ist Firewall {\tt fw2} die zwischen \fwb sitzt.
 
 \subsubsection{Verbindung von pc01 nach inet1}
 
@@ -645,3 +642,12 @@ case "$1" in
 esac
 \end{lstlisting}
 \section{Zusammenfassung}
+
+
+
+\begin{appendix}
+\section{\fwa}
+
+\lstinputlisting{code/firewall-external.sh}
+%\lstinputlisting[firstline=37, lastline=45]{source_filename.py}
+\end{appendix}

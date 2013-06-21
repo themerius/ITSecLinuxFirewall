@@ -1,6 +1,13 @@
 \section{Einleitung}
 
+Worum gehts? Firewall Geschichte? Theorie und Technisches über iptables (extra Kapitel)
 Die Einleitung \cite{iptables}
+
+vpn server liegt auf fw2. client to lan erlauben. 1194 1195 müssen weitergeleitet werden. für welche dev müssen wir die vpn freigeben?
+
+alles was von innen nach außen aufgebaut wird, soll erlaub werden.
+
+route muss in srv1 ins fw2 netzwerk eingetragen werden
 
 \subsection{Begriffsdefinitionen}
 
@@ -66,9 +73,9 @@ Die Netzweradapter wurden gemäß der in Abbildung \ref{fig.netzplan}
 gezeigten IP-Adressen konfiguriert.
 Die Konfigurationsdatei dazu liegt in {\tt /etc/network/interfaces}.
 
-\subsubsection{Extranet $\Longleftrightarrow$ DMZ}
+\subsubsection{\fwa}
 
-Ist Firewall {\tt fw1} die zwischen Extranet $\Longleftrightarrow$ DMZ sitzt.
+Ist Firewall {\tt fw1} die zwischen \fwa sitzt.
 
 \paragraph{eth0} Verbindung zur DMZ.
 
@@ -93,9 +100,9 @@ iface eth1 inet static
 \end{lstlisting}
 
 
-\subsubsection{DMZ $\Longleftrightarrow$ Intranet}
+\subsubsection{\fwb}
 
-Ist Firewall {\tt fw2} die zwischen DMZ $\Longleftrightarrow$ Intranet sitzt.
+Ist Firewall {\tt fw2} die zwischen \fwb sitzt.
 
 \paragraph{eth0} Verbindung zum Intranet.
 
@@ -124,13 +131,17 @@ iface eth1 inet static
 
 \subsection{Nützliches}
 
-\paragraph{Einfacher Dateitransfer}
+\subsubsection{Einfacher Dateitransfer}
 
-Empfänger:
-{\tt fw2\# netcat -l -p 8080 > firewall-internal.sh}
+\noindent Empfänger:
+\begin{verbatim}
+fw2 $ netcat -l -p 8080 > firewall-internal.sh
+\end{verbatim}
 
-Sender:
-{\tt fw1\# cat firewall-external.sh | netcat 192.168.40.240 8080}
+\noindent Sender:
+\begin{verbatim}
+fw1 $ cat firewall-external.sh | netcat 192.168.40.240 8080
+\end{verbatim}
 
 
 \subsection{Bootskript}
@@ -194,3 +205,13 @@ case "$1" in
         ;;
 esac
 \end{lstlisting}
+
+
+\section{Anforderungen}
+
+\subsection{\fwa}
+
+\paragraph{§ 1 Anforderungsname}
+
+\subsection{\fwb}
+
