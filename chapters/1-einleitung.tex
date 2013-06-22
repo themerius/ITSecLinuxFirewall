@@ -4,11 +4,7 @@ Worum gehts? Firewall Geschichte? Theorie und Technisches über iptables (extra 
 Die Einleitung \cite{iptables}
 
 
-\subsection{Begriffsdefinitionen}
-
-Masquarading? Hier oder im Konfig Kapitel?
-
-Connection Tracking, DNAT, ...
+\subsection{Begriffsdefinitionen}\label{sec.begriffe}
 
 \paragraph{DMZ}
 Wenn als Begriff in der Computernetzwerktechnik verstanden, ist die
@@ -22,6 +18,42 @@ sichere Weise sowohl vom Internet (Extranet) als auch aus dem LAN (Intranet)
 erreichbar,
 während gleichzeitig das LAN vor unberechtigten Zugriffen von außen geschützt
 wird, so dass beispielsweise die Rechner der Mitarbeiter sicher sind.
+
+\paragraph{NAT}
+Unter den Begriff \emph{Network Address Translation} fallen alle Verfahren,
+welche Adressinformationen in Datenpaketen durch andere ersetzen.
+Typischer Einsatzort sind beispielsweise Router, bei denen NAT nötig wird,
+wenn ein LAN aus dem Internet nur über eine IP-Adresse sichtbar ist.
+
+\paragraph{DNAT}
+\emph{Destination-NAT} verändert die Ziel-Adresse eines Pakets.
+Neben der Ziel-IP im IP-Header kann auch der Ziel-Port in einem
+TCP- bzw. UDP-Header geändert werden.
+Eingesetzt wird das Verfahren um Pakete, welche an der öf\-fent\-lichen Adresse
+des Routers eingehen, an einen anderen Rechner im LAN mit privater IP-Adresse
+weiterzuleiten.
+
+\paragraph{SNAT}
+Möchte man statt der Ziel-Adresse die Quell-Adresse eines Pakets ändern, wird
+dies als \emph{Source-NAT} bezeichnet.
+Auch hier lässt sich logischerweise IP-Adresse und TCP- bzw. UDP-Port
+modifzieren.
+Dieses Verfahren wird nun nicht bei den eingehenden, sondern bei den ausgehenden
+Paketen angewandt, um die private lokale Adresse durch die öffentliche zu
+ersetzen.
+
+\paragraph{Masquerading}
+\emph{Masquerading} stellt eine besondere Form des Source-NAT dar, da beim
+Eintragen der Regel in die Tabellen des Kernels die einzusetzende IP-Adresse
+nicht bekannt sein muss.
+Damit lässt sich Maquerading auch verwenden, wenn die öffentliche Adresse nicht
+statisch ist, sondern mittels DHCP zugewiesen wird.
+Die Masquerade-Regel wird für einen Netzwerkadapter spezifiziert und beim
+Ersetzen der Adresse wird jeweils die aktuelle IP-Adresse des Adapters
+übernommen.
+
+\paragraph{Connection Tracking}
+TODO
 
 
 \subsection{Versuchsaufbau}
@@ -68,7 +100,7 @@ Die genaue Konfiguration der einzelnen Netzwerkadapter ist in Kapitel
 In der Debian-Installation sind die Befehle {\tt iptables} und {\tt route}
 standardmäßig verfügbar.
 Mit {\tt iptables} lassen sich IPv4-Pakete filtern und Network Address
-Translations (kurz NAT) durchführen.
+Translations durchführen.
 Der Befehl {\tt route} dient zum Ändern der IP-Routing-Tabellen des Kernels um
 beispielsweise statische Routen für bestimmte Rechner oder Netzwerke
 festzulegen.
@@ -166,8 +198,9 @@ iface eth1 inet static
 Um auf einfache Weise eine Datei von einem Rechner auf einen anderen zu
 kopieren, ohne beispielsweise einen Telnet-, FTP- oder SSH-Server aufsetzen zu
 müssen, bietet sich das Programm {\tt Netcat} an.
-{\tt Netcat} erlaubt es als "`TCP/IP swiss army knife"'
-server- und client-seitig Daten von der Standardein- oder -ausgabe über
+{\tt Netcat} erlaubt es als "`TCP/IP swiss army knife"'\footnote{
+\url{http://nc110.sourceforge.net/}
+} server- und client-seitig Daten von der Standardein- oder -ausgabe über
 Netzwerkverbindungen zu transportieren.\\
 
 \noindent Empfänger:
@@ -183,7 +216,8 @@ fw1 $ cat firewall-external.sh | netcat 192.168.40.240 8080
 
 \subsection{Bootskript}
 
-Debian verwendet das sogenannte \emph{Init Script LSB}\footnote{
+Debian verwendet das von der Linux Standard Base spezifizierte
+\emph{Init Script LSB}\footnote{
 \url{http://wiki.debian.org/LSBInitScripts}}, welches Unterstützung
 für \emph{dependency based boot sequencing}\footnote{
 \url{http://wiki.debian.org/LSBInitScripts/DependencyBasedBoot}
