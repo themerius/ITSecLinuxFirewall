@@ -99,7 +99,19 @@ Dazu wird von {\tt pc01} auf den Webserver von {\tt net1} zugegriffen.
 \end{figure}
 
 
+\subsection{Netzwerkkonfiguration des Servers}
+
+Damit beim Zugriff von einem Rechner aus dem LAN auf den Server
+{\tt srv1} der \emph{Firma A} die Pakete direkt zurückgesendet werden und nicht
+erst beim Default-Gateway {\tt fw1} landen, wurde auf dem
+Server eine Route zum LAN mit {\tt fw2} als Gateway definiert.
+Dafür wurde folgende Zeile zur Datei {\tt /etc/network/interfaces} hinzugefügt:
+\begin{verbatim}
+up route add -net 192.168.30.0/24 gw 192.168.40.240
+\end{verbatim}
+
 
 \section{Zusammenfassung}
 
-Zusammenfassung
+TODO: Zusammenfassung
+

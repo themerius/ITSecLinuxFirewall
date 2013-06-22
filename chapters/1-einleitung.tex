@@ -3,27 +3,28 @@
 Worum gehts? Firewall Geschichte? Theorie und Technisches über iptables (extra Kapitel)
 Die Einleitung \cite{iptables}
 
-vpn server liegt auf fw2. client to lan erlauben. 1194 1195 müssen weitergeleitet werden. für welche dev müssen wir die vpn freigeben?
-
-alles was von innen nach außen aufgebaut wird, soll erlaub werden.
-
-route muss in srv1 ins fw2 netzwerk eingetragen werden
 
 \subsection{Begriffsdefinitionen}
 
 Masquarading? Hier oder im Konfig Kapitel?
 
-Connection Tracking? Hier oder im Konfig Kapitel?
+Connection Tracking, DNAT, ...
 
 \paragraph{DMZ}
-Wenn als Computernetzwerkbegriff verstanden ist die
-\emph{demilitarisierte Zone} ein Bereich in dem Dienste einer Firma die nach Außen,
-also z.B. das Internet oder Extranet, angeboten werden. Diese Dienste sollen
-vom eigentelichen LAN in einem abgeschotteten Bereich laufen, so dass
-beispielsweise die Mitarbeiterrechner sicher sind.
+Wenn als Begriff in der Computernetzwerktechnik verstanden, ist die
+\emph{demilitarisierte Zone} ein Netzwerk mit durch Firewalls
+kontrollierten Zugriffs\-mög\-lich\-keiten auf die darin vorhandenen Server.
+Durch diese Isolation der in der DMZ aufgestellten Systeme gegenüber den anderen
+Netzwerken, kann der Zugriff auf Dienste wie beispielsweise E-Mail und Webserver
+gestattet werden.
+Diese Dienste laufen auf Servern innerhalb der DMZ und sind somit auf möglichst
+sichere Weise sowohl vom Internet (Extranet) als auch aus dem LAN (Intranet)
+erreichbar,
+während gleichzeitig das LAN vor unberechtigten Zugriffen von außen geschützt
+wird, so dass beispielsweise die Rechner der Mitarbeiter sicher sind.
 
 
-\section{Versuchsaufbau}
+\subsection{Versuchsaufbau}
 
 Ziel ist es das Firmen-LAN sowie die zugehörige DMZ durch die
 {\tt iptables} Linux-Firewall abzusichern.
@@ -41,8 +42,13 @@ eine virtuelle Maschine bereitgestellt --- dies ermöglicht leichteres
 Testen.
 
 Wir haben uns dazu entschieden, das Netzwerk der \emph{Firma A} aufzubauen.
-Firma B bleibt unangetastet, und ist somit vollständig vorkonfiguriert,
-was ebenfalls ein leichteres Testen ermöglicht.\cite{labor}
+\emph{Firma B} bleibt unangetastet, und ist somit vollständig vorkonfiguriert,
+was ebenfalls ein leichteres Testen ermöglicht, da der Web- und Mail-Server von
+\emph{Firma B} aus dem "`Internet"' erreichbar ist und somit auch aus dem LAN
+der \emph{Firma A} erreichbar sein muss.
+Zudem lässt sich so der "`umgekehrte"' Fall testen: der Zugriff von einem
+Rechner aus dem LAN von \emph{Firma B} auf die Dienste von
+\emph{Firma A}.\cite{labor}
 
 
 \section{Linux Konfiguration}
@@ -55,6 +61,7 @@ Zum Einrichten und Testen der Firewall-Rechner wurde noch weitere Software
 installiert, welche in Kapitel \ref{sec.software} aufgelistet ist.
 Die genaue Konfiguration der einzelnen Netzwerkadapter ist in Kapitel
 \ref{sec.netzwerk} beschrieben.
+
 
 \subsection{Software}\label{sec.software}
 
@@ -95,7 +102,9 @@ gezeigten IP-Adressen konfiguriert, dies geschieht über die Datei
 
 \subsubsection{\fwa}
 
-Ist Firewall {\tt fw1} die zwischen \fwa sitzt.
+Der Firewall Rechner {\tt fw1.firma-a.f223} befindet sich zwischen dem Extranet
+(10.1.0.0/24) und der DMZ (192.168.40.0/24).
+Damit ergibt sich für die beiden Netzwerkadapter folgende Konfiguration:
 
 \paragraph{eth0} Verbindung zur DMZ.
 
@@ -122,7 +131,8 @@ iface eth1 inet static
 
 \subsubsection{\fwb}
 
-Ist Firewall {\tt fw2} die zwischen \fwb sitzt.
+Die Konfiguration für den Firewall Rechner {\tt fw2.firma-a.f223}, der zwischen
+der DMZ und dem Intranet (192.168.30.0/24) sitzt, sieht wie folgt aus:
 
 \paragraph{eth0} Verbindung zum Intranet.
 
@@ -184,8 +194,9 @@ durch Abhängigkeiten der Programme untereinander entstehen.
 
 Diese Bootskripte werden in {\tt /etc/init.d/} als Konfigurationsdateien
 abgelegt und beginnen mit wohldefinierten Kopfzeilen, wie in Listing
-\ref{lst:lsb-header} gezeigt. In diesen Zeilen können die Abhängigkeiten
-konfiguriert werden.
+\ref{lst:lsb-header} gezeigt.
+In diesen Kopfzeilen kann neben einer Beschreibung auch das
+Start- / Stopp-Verhalten sowie die Abhängigkeiten konfiguriert werden.
 
 \begin{lstlisting}[label=lst:lsb-header,caption={Init Script LSB: Kopfzeilen.}]
 ### BEGIN INIT INFO
@@ -199,9 +210,44 @@ konfiguriert werden.
 ### END INIT INFO
 \end{lstlisting}
 
-% TODO (MB): Beschreibung der Linux-Runlevels
-% Achtung bei Debian wird auch bei 2 Netzwerk gestartet
-% Angabe der gewählten Runlevel und Beschreibung der Abhängigkeiten
+Die Angaben bei den Schlüsselwörtern {\tt Default-Start} und {\tt Default-Stop}
+geben die Runlevel an, bei den das Skript gestartet beziehungsweise gestoppt
+wird.
+Für Debian Systeme sind die Runlevel laut Tabelle \ref{tab.runlevel} definiert.
+\footnote{
+\url{http://debiananwenderhandbuch.de/startstop.html}
+}
+
+\begin{table}[htb]
+    \centering
+    \begin{tabular}{|c|l|}
+        \hline
+        Runlevel & Beschreibung\\
+        \hline
+        0       & {\tt halt}, hält das System an, ohne es neu zu starten\\
+        1       & Single-User Modus, minimal benötigte Dienste (Wartunsgarbeiten)\\
+        2 bis 5 & Multiuser Modus, hier wird üblicherweise gearbeitet\\
+        6       & {\tt reboot}, startet das System neu\\
+        S und s & bringen das System in den Single-User Modus\\
+        \hline
+    \end{tabular}
+   \caption{Runlevel bei Debian.}\label{tab.runlevel}
+\end{table}
+
+\noindent Im Normalbetrieb läuft ein Debian System im Runlevel 2.
+Die zusätzlichen Multiuser Runlevel geben die Möglichkeit, verschiedene
+Konfigurationen von Diensten einzurichten und den gewünschten Runlevel beim
+Starten des Betriebssystems per Kernel-Parameter anzugeben.
+Die Firewall-Skripte werden in allen Multiuser Modi gestartet und beim
+Herunterfahren des Systems sowie im Single-User Modus, in dem keine
+Netzwerkschnittstellen aktiv sind, gestoppt.
+
+{\tt Required-Start} und {\tt Required-Stop} definieren die Dienste, die bei
+der Aus\-füh\-rung des Skriptes bereits laufen oder noch laufen müssen.
+Für die Firewall-Skripte haben wir an dieser Stelle
+\verb!$local_fs $remote_fs $syslog $network! gewählt, da so das Netzwerk und
+alle Dateisysteme vorhanden sind und auch der Syslog-Daemon eventuell
+auftretende Fehler protokollieren kann.
 
 Das Programm {\tt insserv}\footnote{
 \emph{Vor} Debian 6.0 wird {\tt update-rc.d} verwendet.
@@ -240,9 +286,15 @@ esac
 
 \section{Anforderungen}
 
+TODO: generell Anforderungen aus Aufgabenstellung
+
 \subsection{\fwa}
+
+TODO: welche Anforderungen sich anhand der generellen Anforderungen für FW1 ergeben
 
 \paragraph{§ 1 Anforderungsname}
 
 \subsection{\fwb}
+
+TODO: welche Anforderungen sich anhand der generellen Anforderungen für FW2 ergeben
 
