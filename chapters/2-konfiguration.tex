@@ -12,7 +12,7 @@ sie nimmt alle Pakete an. Zugriff auf Rechner innerhalb der DMZ ist ohne
 weitere Regeln jedoch \emph{nicht} möglich, also \emph{keine} Weiterreichung von
 Pakten.
 
-\paragraph{Konfiguration} Diese Konfigurationsdatei aus Listing \ref{lst:init}
+\paragraph{Konfiguration} Diese Konfigurationsdatei aus Listing \ref{lst:external}
 befindet sich in {\tt /etc/init.d/firewall-external.sh}.
 Das Skript wird mit dem Befehl {\tt chmod u+x firewall-external.sh}
 ausführbar gemacht. Mit {\tt insserv firewall-external.sh}
@@ -37,8 +37,8 @@ möglich ist.
 den Web- und Mailserver {\tt srv1}, weitergeleitet werden.
 Es laufen HTTP auf Port 80, HTTPS auf Port 443 und SMTP auf Port 25.
 
-\paragraph{Konfiguration} Das Listing \ref{lst:webserver} ist das Skript
-aus Listing \ref{lst:init}, entsprechend erweitert.
+\paragraph{Konfiguration} Das Listing XYZ ist das Skript
+aus Listing XYZ, entsprechend erweitert.
 Es wird die Option {\tt DNAT} gewählt, womit das Ziel umgebogen wird.
 Die Firewall sieht von Außen nun aus wie der jeweilige Server.
 
@@ -80,6 +80,24 @@ auffinden kann.
 
 \paragraph{Test} Funktioniert nur bei aktiven Masquerading bei {\tt fw1}.
 Dazu wird von {\tt pc01} auf den Webserver von {\tt net1} zugegriffen.
+
+
+\section{Tests}\label{sec.tests}
+
+\begin{figure}[h!]
+  \centering
+    \includegraphics[width=0.9\textwidth]{figures/iptstate-extern.png}
+  \caption{iptstate der externen Firewall.}
+  \label{fig.iptstate-extern}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+    \includegraphics[width=0.9\textwidth]{figures/iptstate-intern.png}
+  \caption{iptstate der internen Firewall.}
+  \label{fig.iptstate-intern}
+\end{figure}
+
 
 
 \section{Zusammenfassung}

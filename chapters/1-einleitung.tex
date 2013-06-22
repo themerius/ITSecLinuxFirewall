@@ -37,41 +37,61 @@ Ziel ist es das Firmen-LAN sowie die zugehörige DMZ durch die
 
 Dazu sind im Versuchsaufbau für jeden der in Abbildung 
 \ref{fig.netzplan} abgebildeten Rechner
-eine virtuelle Maschine bereitgestellt---dies ermöglicht leichteres
+eine virtuelle Maschine bereitgestellt --- dies ermöglicht leichteres
 Testen.
 
 Wir haben uns dazu entschieden, das Netzwerk der \emph{Firma A} aufzubauen.
 Firma B bleibt unangetastet, und ist somit vollständig vorkonfiguriert,
-was ein leichteres Testen ermöglicht.\cite{labor}
+was ebenfalls ein leichteres Testen ermöglicht.\cite{labor}
 
 
 \section{Linux Konfiguration}
 
 Zunächst müssen zwei Debian 6.0 Maschinen,
 mit der minimalen Installation, eingerichtet werden.
-Diese repräsentieren die Firewallmaschinen {\tt fw1} und {\tt fw2} aus
-Abbildung \ref{fig.netzplan}.
-Es wurde noch weitere Software installiert,
-beschrieben in Kapitel \ref{sec.software}.
-Die genaue Netzwerkadapterkonfiguration ist in Kapitel \ref{sec.netzwerk}
+Diese repräsentieren die Firewallmaschinen {\tt fw1} und {\tt fw2} von
+\emph{Firma A} aus Abbildung \ref{fig.netzplan}.
+Zum Einrichten und Testen der Firewall-Rechner wurde noch weitere Software
+installiert, welche in Kapitel \ref{sec.software} aufgelistet ist.
+Die genaue Konfiguration der einzelnen Netzwerkadapter ist in Kapitel
+\ref{sec.netzwerk} beschrieben.
 
 \subsection{Software}\label{sec.software}
 
-Zusätzliche Software wurde via {\tt apt-get}, Debians Paketmanager,
-installiert.
+In der Debian-Installation sind die Befehle {\tt iptables} und {\tt route}
+standardmäßig verfügbar.
+Mit {\tt iptables} lassen sich IPv4-Pakete filtern und Network Address
+Translations (kurz NAT) durchführen.
+Der Befehl {\tt route} dient zum Ändern der IP-Routing-Tabellen des Kernels um
+beispielsweise statische Routen für bestimmte Rechner oder Netzwerke
+festzulegen.
+
+Folgende zusätzliche Software wurde via {\tt apt-get}, Debians Paketmanager,
+installiert:
 
 \begin{itemize}
-    \item iptables
-    \item iptstate---IPTables State Top.
-    \item resolvconf---Nameserver information handler.
+    \item iptstate --- IPTables State Top.\\
+        Zeigt Informationen über die IP Tables state table an (siehe Kap.
+        \ref{sec.tests}).
+    \item resolvconf --- Nameserver information handler.\\
+        Erlaubt es, die DNS-Nameserver in der Datei
+        {\tt /etc/network/interfaces}
+        per {\tt dns-nameservers 1.2.3.4 5.6.7.8} zu definieren und
+        generiert daraus die benötigten Einträge in der {\tt /etc/resolv.conf}
+        (siehe Listings \ref{lst:fw1:eth0} \& \ref{lst:fw2:eth1}).
+    \item mcedit --- Internal file editor of GNU Midnight Commander.\\
+        Text-Editor für die Konsole, welcher neben Aktionen wie Kopieren,
+        Ausschneiden und Einfügen auch Syntax-Highlighting für eine Vielzahl von
+        Dateitypen bietet. Hierfür muss der GNU Midnight Commander mittels des
+        Pakets {\tt mc} installiert werden.
 \end{itemize}
 
 
 \subsection{Netzwerkadapter}\label{sec.netzwerk}
 
 Die Netzweradapter wurden gemäß der in Abbildung \ref{fig.netzplan}
-gezeigten IP-Adressen konfiguriert.
-Die Konfigurationsdatei dazu liegt in {\tt /etc/network/interfaces}.
+gezeigten IP-Adressen konfiguriert, dies geschieht über die Datei
+{\tt /etc/network/interfaces}.
 
 \subsubsection{\fwa}
 
@@ -79,7 +99,7 @@ Ist Firewall {\tt fw1} die zwischen \fwa sitzt.
 
 \paragraph{eth0} Verbindung zur DMZ.
 
-\begin{lstlisting}[label=lst:dmz:eth0,caption={Netzwerkadapter eth0 Konfiguration.}]
+\begin{lstlisting}[label=lst:fw1:eth0,caption={Netzwerkadapter eth0 Konfiguration.}]
 allow-hotplug eth0
 iface eth0 inet static
     address 192.168.40.250
@@ -91,7 +111,7 @@ iface eth0 inet static
 
 \paragraph{eth1} Verbindung zum Extranet bzw. Internet.
 
-\begin{lstlisting}[label=lst:extranet:eth1,caption={Netzwerkadapter eth1 Konfiguration.}]
+\begin{lstlisting}[label=lst:fw1:eth1,caption={Netzwerkadapter eth1 Konfiguration.}]
 allow-hotplug eth1
 iface eth1 inet static
     address 10.1.0.131
@@ -106,7 +126,7 @@ Ist Firewall {\tt fw2} die zwischen \fwb sitzt.
 
 \paragraph{eth0} Verbindung zum Intranet.
 
-\begin{lstlisting}[label=lst:dmz:eth0,caption={Netzwerkadapter eth0 Konfiguration.}]
+\begin{lstlisting}[label=lst:fw2:eth0,caption={Netzwerkadapter eth0 Konfiguration.}]
 allow-hotplug eth0
 iface eth0 inet static
     address 192.168.30.240
@@ -118,7 +138,7 @@ iface eth0 inet static
 
 \paragraph{eth1} Verbindung zur DMZ.
 
-\begin{lstlisting}[label=lst:extranet:eth1,caption={Netzwerkadapter eth1 Konfiguration.}]
+\begin{lstlisting}[label=lst:fw2:eth1,caption={Netzwerkadapter eth1 Konfiguration.}]
 allow-hotplug eth1
 iface eth1 inet static
     address 192.168.40.240
@@ -132,6 +152,13 @@ iface eth1 inet static
 \subsection{Nützliches}
 
 \subsubsection{Einfacher Dateitransfer}
+
+Um auf einfache Weise eine Datei von einem Rechner auf einen anderen zu
+kopieren, ohne beispielsweise einen Telnet-, FTP- oder SSH-Server aufsetzen zu
+müssen, bietet sich das Programm {\tt Netcat} an.
+{\tt Netcat} erlaubt es als "`TCP/IP swiss army knife"'
+server- und client-seitig Daten von der Standardein- oder -ausgabe über
+Netzwerkverbindungen zu transportieren.\\
 
 \noindent Empfänger:
 \begin{verbatim}
@@ -172,13 +199,17 @@ konfiguriert werden.
 ### END INIT INFO
 \end{lstlisting}
 
-Wenn \emph{dependency-based booting} aktiviert ist, wird ein Daemon mit seinem
-Startupskript aus {\tt /etc/init.d/} mit {\tt insserv}\footnote{
+% TODO (MB): Beschreibung der Linux-Runlevels
+% Achtung bei Debian wird auch bei 2 Netzwerk gestartet
+% Angabe der gewählten Runlevel und Beschreibung der Abhängigkeiten
+
+Das Programm {\tt insserv}\footnote{
 \emph{Vor} Debian 6.0 wird {\tt update-rc.d} verwendet.
-} gestartet:
+} aktiviert installierte Init-Skripte, in dem es die passenden symbolischen
+Links in den Runlevel-Verzeichnissen ({\tt /etc/init.d/rcX.d}) setzt:
 
 \begin{verbatim}
-insserv mydaemon_script
+insserv my_init_script
 \end{verbatim}
 
 Nach den Kopfzeilen kommt das eigentliche Skript, welches z.B. mittels
