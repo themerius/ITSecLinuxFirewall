@@ -1,9 +1,71 @@
 \section{Firewall Konfiguration}
 
-iptables Chains
-% http://wiki.ubuntuusers.de/iptables2?redirect=no#Chains
+Die Paketprüfung mit {\tt iptables} ist dreistufig aufgebaut.
+Hierarchisch von oben nach unten angeordnet gibt es die Tabellen, die Chains
+(Ketten) und die eigentlichen Filterregeln\footnote{
+\url{http://wiki.ubuntuusers.de/iptables2}
+}.
+Die im Rahmen des Labors verwendeten Tabellen sind einerseits die {\tt filter}
+Tabelle, welche reine Filterregeln enthält, und die {\tt nat} Tabelle, welche
+für Network Address Translations und Verfahren wie Port Forwarding eingesetzt
+wird.
+Innerhalb jeder Tabelle existieren verschiedene Chains, welche spezifizieren,
+wann ein Paket geprüft wird.
+Folgende Chains existieren in den Linux {\tt iptables}:
 
-Techniken wie NAT (DNAT, Masquerading) siehe \ref{sec.begriffe}
+\begin{itemize}
+\item {\tt INPUT} --- betrifft Pakete, welche an einen lokalen Prozess gehen
+      sollen
+\item {\tt OUTPUT} --- betrifft Pakete, welche von einem lokalen Prozess stammen
+\item {\tt FORWARD} --- betrifft Pakete, welche geroutet werden
+\item {\tt PREROUTING} --- wird auf Pakete angewendet, bevor diese geroutet
+      werden (Element der {\tt nat} Tabelle)
+\item {\tt POSTROUTING} --- wird auf Pakete angewendet, nachdem diese geroutet
+      wurden (Element der {\tt nat} Tabelle)
+\end{itemize}
+
+\noindent Die eigentlichen Regeln werden in einer Tabelle und Chain definiert,
+trifft eine Regel auf ein Paket zu, wird die in der Regel angegebene Aktion
+durchgeführt.
+Wenn keine Regel zutrifft, wird die allgemein gültige Policy angewendet.
+\\
+
+\noindent Als grundsätzliche Konfiguration beider Firewalls wird die Policy für
+eingehende, ausgehende und weiterzuleitende Pakete auf {\tt DROP} gesetzt.
+Dies wird mit den {\tt iptables} Befehlen aus Listing \ref{lst:policy}
+realisiert.
+
+\lstinputlisting[
+    firstline=39,
+    lastline=41,
+    label=lst:policy,
+    caption={Default-Policy der Firewalls.}
+]{code/firewall-external.sh}
+
+\noindent Da die Firewall Rechner als Router zwischen den jeweiligen Netzen
+fungieren, muss grundsätzlich das Forwarding von Paketen aktiviert werden.
+Für IPv4-Pakete kann dafür der folgende Befehl genutzt werden:
+
+\begin{verbatim}
+echo "1" > /proc/sys/net/ipv4/ip_forward
+\end{verbatim}
+
+\noindent Um die Kommunikation lokaler Dienste nicht zu stören, werden ein-
+und ausgehende Pakete an die Loopback-Adresse ({\tt 127.0.0.1}) nicht von der
+Firewall blockiert.
+Für die weiterzuleitenden Pakete wird Connection Tracking
+(siehe Kapitel \ref{sec.begriffe}) verwendet.
+Damit in den eigentlichen Regeln nur noch Pakete mit Status {\tt NEW} erlaubt
+werden müssen, werden Pakete mit Status {\tt ESTABLISHED} oder {\tt RELATED}
+grundsätzlich erlaubt.
+{\tt INVALID} Pakete dagegeben werden vor allen anderen Regeln verworfen.
+
+\lstinputlisting[
+    firstline=49,
+    lastline=61,
+    label=lst:established_related_invalid,
+    caption={Regeln für ESTABLISHED, RELATED und INVALID Pakete.}
+]{code/firewall-external.sh}
 
 
 \subsection{\fwa}
