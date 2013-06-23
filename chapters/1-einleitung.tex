@@ -320,15 +320,74 @@ esac
 
 \section{Anforderungen}
 
-TODO: generell Anforderungen aus Aufgabenstellung
+Anforderungen, welche sich aus der Aufgabenstellung ergeben
+
+- Mitarbeiter haben Zugang zum Internet (Arbeitsplatzrechner befinden sich im LAN)
+- Website der Firma soll vom Internet aus erreichbar sein (HTTP+HTTPS)
+- Mail-Server (aus Internet erreichbar)
+- DMZ
+  - enthält Webserver und Mailserver
+  - Zugriff auf das Internet vom LAN aus geht über die DMZ
+- Firewalls sollen unerlaubte Zugriffe auf DMZ und das Firmen-LAN verhindern
+- VPN
+  - Kopplung der zwei Unternehmen: LAN-to-LAN (1194)
+  - Einwahl der Mitarbeiter von unterwegs (Internet) ins LAN (Client-to-LAN, 1195)
+- öffentliche IP-Adresse (darüber müssen die Dienste Webserver, Mail und VPN aus dem Internet erreichbar sein)
+- DNS (srv1 intern, net1 im Internet)
+
 
 \subsection{\fwa}
 
-TODO: welche Anforderungen sich anhand der generellen Anforderungen für FW1 ergeben
+Anforderungen, die sich anhand der generellen Anforderungen für FW1 ergeben
 
-\paragraph{§ 1 Anforderungsname}
+- Verwendung von Connection Tracking
+  - Pakete, die zu einer bestehenden Verbindung gehören, werden akzeptiert
+  - Filterung der eingehenden Pakete um DMZ und LAN zu schützen
+
+\paragraph{§ 1 Zugriff auf das Internet}
+- NAT/Masquerading (Pakete die ins Internet gehen enthalten nur öffentliche IP-Adresse der externen Firewall (10.1.0.131) für Pakete aus LAN und vom Server
+- Forwarding vom LAN zum Extranet
+
+\paragraph{§ 2 Mail- und Webserver}
+- eingehende Pakete an die entsprechenden Ports der öffentlichen IP-Adresse werden an srv1 weitergeleitet
+- dafür wird DNAT verwendet
+- SMTP (25), HTTP (80), HTTPS (443)
+
+\paragraph{§ 3 VPN}
+- VPN-Server befindet sich auf fw2
+- Weiterleitung + DNAT der Pakete (UDP-Ports 1194 und 1195)
+
+\paragraph{§ 4 DNS}
+- die Arbeitsplatzrechner im LAN verwenden srv1 für DNS-Anfragen
+- zur Auflösung von Hostnames aus dem Internet (zB. www.firma-b.f223), muss srv1 die DNS-Anfragen an net1 weiterleiten können (fw1 macht Forwarding der DNS-Pakete von srv1 zum Extranet, Masquerading greift hier natürlich auch)
+
 
 \subsection{\fwb}
 
-TODO: welche Anforderungen sich anhand der generellen Anforderungen für FW2 ergeben
+Anforderungen, welche sich anhand der generellen Anforderungen für FW2 ergeben
+
+- Schutz der Rechner im LAN
+- Zugriffe auf Rechner im LAN muss unterbunden werden
+- Pakete einer bestehenden Verbindung werden mittels Connection Tracking ebenfalls erlaubt
+
+\paragraph{§ 1 Zugriff auf das Internet}
+- ausgehende Pakete aus dem LAN in Richtung des Extranets werden erlaubt
+
+\paragraph{§ 2 Mail- und Webserver}
+- Forwarding der Pakete an Mail- und Webserver
+
+\paragraph{§ 3 VPN}
+- der VPN-Server läuft auf diesem Firewall Rechner
+- eingehende Pakete an die UDP-Ports 1194 und 1195 müssen erlaubt werden
+- Verwendung von virtuellen Netzwerkgeräten:
+- LAN-to-LAN
+  - Verwendung des Routing Modus von OpenVPN mittels TUN-Device
+  - TUN simuliert ein Point-to-Point-Netzwerkgerät, kommuniziert per IP-Paketen
+- Client-to-LAN
+  - Verwendung des Bridging Modus von OpenVPN mittels TAP-Device
+  - TAP simuliert ein Ethernet-Gerät und kommuniziert über Ethernet-Frames
+- TUN- und TAP-Adapter müssen jeweils bidirektional mit dem LAN kommunizieren können
+
+\paragraph{§ 4 DNS}
+- DNS-Anfragen der Arbeitsplatzrechner müssen an srv1 weitergeleitet werden
 
