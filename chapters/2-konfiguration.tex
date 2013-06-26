@@ -54,7 +54,7 @@ echo "1" > /proc/sys/net/ipv4/ip_forward
 und ausgehende Pakete an die Loopback-Adresse ({\tt 127.0.0.1}) nicht von der
 Firewall blockiert.
 Für die weiterzuleitenden Pakete wird Connection Tracking
-(siehe Kapitel \ref{sec.begriffe}) verwendet.
+(siehe Kapitel \ref{sec.fw-tec}) verwendet.
 Damit in den eigentlichen Regeln nur noch Pakete mit Status {\tt NEW} erlaubt
 werden müssen, werden Pakete mit Status {\tt ESTABLISHED} oder {\tt RELATED}
 grundsätzlich erlaubt.

@@ -16,10 +16,10 @@ Das änderte sich jedoch im November 1988, als der Morris-Wurm sein unwesen
 trieb, der förmlich eine Epidemie im Internet auslöste. Dies bewegte Firmen
 dazu, sich Gedanken über den Schutz ihrer Netzwerke zu machen.
 
-Die ersten Firewallsysteme wurde bei DEC bzw. AT\&T entwickelt. Dabei handelte
+Die ersten Firewallsysteme wurden bei DEC bzw. AT\&T entwickelt. Dabei handelte
 es sich um einen Gatekeeper, der als einziger Zugriff auf das Internet hatte
-und somit den Zugang zu diesem kontrolliert und ein Gate welches den Zugriff
-vom internen Netzwerk auf den Gatekeeper als Paketfilter überwacht.
+und somit den Zugang zu diesem kontrollierte und ein Gate welches den Zugriff
+vom internen Netzwerk auf den Gatekeeper als Paketfilter überwachte.
 1991 wurde die erste kommerizielle Firewall \emph{DEC-SEAL} verkauft.\cite{iptables}
 
 \paragraph{Heutige Firewalls} bestehen meist aus einer Kombination aus
@@ -27,7 +27,7 @@ Paketfilter und Proxy. Falls der Datendurchsatz in einem System sehr
 hoch ist, werden oft reine Paketfilter eingesetzt.\cite{iptables}
 
 
-\subsection{Firewall-Technologien}
+\subsection{Firewall-Technologien}\label{sec.fw-tec}
 
 \paragraph{Zustandslose Paketfilter} ist die einfachste Technologie und
 wurde bereits 1989 von Jeffrey C. Mogul als {\tt screend} implementiert.
@@ -43,14 +43,16 @@ betrachtet und darauf die Regeln angewandt.\cite{iptables}
 zustandsorientierten Paketfilter auf. Hier merkt sich die Firewall
 ein- und ausgegangene Verbindungen und kann somit auch Entscheidungen
 basierend auf den vergangenen Pakettransaktionen ausführen.
-Die hier Verwendete Software {\tt iptables} gehört zu dieser Kategorie.\cite{iptables}
+Die im Rahmen dieses Labors verwendete Software {\tt iptables} gehört zu dieser
+Kategorie.\cite{iptables}
 
-\paragraph{Curcuit Relay} ist ein Proxy auf der Transport-Schicht sitzt.
+\paragraph{Curcuit Relay} ist ein Proxy, welcher auf der Transport-Schicht
+sitzt.
 
-\paragraph{Application-Level-Gateway} ist ein Proxy der auf der Schicht
+\paragraph{Application-Level-Gateway} ist ein Proxy, der auf der Schicht
 des Applikationsprotokolls arbeitet, d.h. dieser Proxy ist an ein einziges
 spezielles Protokoll gebunden. Im schlimmsten Fall muss also für jede
-Anwendung ein eigenes Firewall-Proxy bereitgestellt werden.
+Anwendung ein eigener Firewall-Proxy bereitgestellt werden.
 Ein solcher Proxy kann eine sehr genaue Inspektion der mit dem jeweiligen
 Protokoll verschickten Daten durchführen.\cite{iptables}
 
@@ -62,6 +64,14 @@ wenn ein LAN aus dem Internet nur über eine IP-Adresse sichtbar ist.
 Kurz gesagt ermöglich es, dass viele Rechner unter der selben IP-Adresse auf Dienste
 im Internet zugreifen.\cite{iptables}
 
+\paragraph{DNAT}
+\emph{Destination-NAT} verändert die Ziel-Adresse eines Pakets.
+Neben der Ziel-IP im IP-Header kann auch der Ziel-Port in einem
+TCP- bzw. UDP-Header geändert werden.
+Eingesetzt wird das Verfahren um Pakete, welche an der öf\-fent\-lichen Adresse
+des Routers eingehen, an einen anderen Rechner im LAN mit privater IP-Adresse
+weiterzuleiten.
+
 \paragraph{SNAT}
 Möchte man statt der Ziel-Adresse die Quell-Adresse eines Pakets ändern, wird
 dies als \emph{Source-NAT} bezeichnet.
@@ -70,6 +80,32 @@ modifzieren.
 Dieses Verfahren wird nun nicht bei den eingehenden, sondern bei den ausgehenden
 Paketen angewandt, um die private lokale Adresse durch die öffentliche zu
 ersetzen.
+
+\paragraph{Masquerading}
+\emph{Masquerading} stellt eine besondere Form des Source-NAT dar, da beim
+Eintragen der Regel in die Tabellen des Kernels die einzusetzende IP-Adresse
+nicht bekannt sein muss.
+Damit lässt sich Maquerading auch verwenden, wenn die öffentliche Adresse nicht
+statisch ist, sondern mittels DHCP zugewiesen wird.
+Die Masquerade-Regel wird für einen Netzwerkadapter spezifiziert und beim
+Ersetzen der Adresse wird jeweils die aktuelle IP-Adresse des Adapters
+übernommen.
+
+\paragraph{Connection Tracking} ist eng mit dem zustandsorientierten Paketfilter
+verwandt.
+Diese Technik ermöglicht es, die Übersicht über alle logischen Verbindungen und
+Sitzungen zu behalten, was für die zustandsorientierten Paketfilter grundlegend
+ist.
+Zusätzlich sind die NAT-Verfahren auf diese Verbindungs-Informationen angewisen,
+um verwandte Pakete auf die gleiche Weise zu manipulieren.
+Die wichtigsten und bei der Umsetzung der Firewalls benutzten Zustände sind:
+\begin{itemize}
+\item {\tt NEW} --- Paket eröffnet eine neue Verbindung
+\item {\tt ESTABLISHED} --- Paket gehört zu einer bestehenden Verbindung
+\item {\tt RELATED} --- Paket beginnt neue, aber bereits erwartete Verbindung
+\item {\tt INVALID} --- Paket wurde als ungültig eingestuft (z.B. Verstoß gegen
+      TCP-Zustände)
+\end{itemize}
 
 
 \subsection{Firewall-Architekturen}
@@ -88,7 +124,7 @@ Die \emph{demilitarisierte Zone} ist ein besonderes, ausgelagertes Netz,
 in dem Systeme positioniert werden, auf die der Zugriff von dem Internet
 möglich sein muss. Ein Screening-Router kann den Paketfluss so steuern,
 dass Systeme aus dem internen Netzwerk nur über die DMZ auf das Internet
-zugreifen können (Proxy.) Ein direkter Zugriff auf das Internet wird so
+zugreifen können (Proxy). Ein direkter Zugriff auf das Internet wird so
 unterbunden. In der DMZ können neben Proxies auch noch Web- und Mailserver
 positioniert werden.\cite{iptables}
 
@@ -99,22 +135,6 @@ Angreifer z.B. den äußeren Screening-Router überwunden hat, kommt er dennoch
 sensible Datenbanken befinden könnten.\cite{iptables}
 In diesem Laborversuch wird genau eine solche multiple DMZ umgesetzt.
 In Kapitel \ref{sec.aufbau} wird der Versuchsaufbau genauer erläutert.
-
-
-\subsection{Begriffsdefinitionen}\label{sec.begriffe}
-
-\paragraph{Masquerading}
-\emph{Masquerading} stellt eine besondere Form des Source-NAT dar, da beim
-Eintragen der Regel in die Tabellen des Kernels die einzusetzende IP-Adresse
-nicht bekannt sein muss.
-Damit lässt sich Maquerading auch verwenden, wenn die öffentliche Adresse nicht
-statisch ist, sondern mittels DHCP zugewiesen wird.
-Die Masquerade-Regel wird für einen Netzwerkadapter spezifiziert und beim
-Ersetzen der Adresse wird jeweils die aktuelle IP-Adresse des Adapters
-übernommen.
-
-\paragraph{Connection Tracking}
-TODO
 
 
 \subsection{Versuchsaufbau}\label{sec.aufbau}
