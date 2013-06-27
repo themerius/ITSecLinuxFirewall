@@ -401,74 +401,108 @@ esac
 
 \section{Anforderungen}
 
-Anforderungen, welche sich aus der Aufgabenstellung ergeben
+Folgende Anforderungen für das Firewall-Konzept ergeben sich aus der
+Aufgabenstellung:
 
-- Mitarbeiter haben Zugang zum Internet (Arbeitsplatzrechner befinden sich im LAN)
-- Website der Firma soll vom Internet aus erreichbar sein (HTTP+HTTPS)
-- Mail-Server (aus Internet erreichbar)
-- DMZ
-  - enthält Webserver und Mailserver
-  - Zugriff auf das Internet vom LAN aus geht über die DMZ
-- Firewalls sollen unerlaubte Zugriffe auf DMZ und das Firmen-LAN verhindern
-- VPN
-  - Kopplung der zwei Unternehmen: LAN-to-LAN (1194)
-  - Einwahl der Mitarbeiter von unterwegs (Internet) ins LAN (Client-to-LAN, 1195)
-- öffentliche IP-Adresse (darüber müssen die Dienste Webserver, Mail und VPN aus dem Internet erreichbar sein)
-- DNS (srv1 intern, net1 im Internet)
-
+\begin{itemize}
+\item Mitarbeiter haben Zugang zum Internet.
+      Die Arbeitsplatzrechner befinden sich im internen Netzwerk.
+\item Die Website und der Mailserver der Firma soll vom Internet
+      aus erreichbar sein.
+      Dafür werden die Protokolle HTTP, HTTPS, SMTP und IMAP verwendet.
+\item Einrichten einer multiplen DMZ,
+      welche Webserver und Mailserver enthält.
+      Der Zugriff auf das Internet vom internen Netzwerk erfolgt über die DMZ.
+\item Die Firewalls sollen unerlaubte Zugriffe auf die DMZ und
+      das Firmen-LAN verhindern.
+\item Ein VPN-Zugriff auf das interne Netzwerk soll möglich sein.
+      Dabei sollen sowohl die Netzwerke der beiden Unternehmen via LAN-to-LAN
+      VPN gekoppelt werden können, als auch eine Einwahl der Mitarbeiter
+      aus dem Internet ins interne Netzwerk der Firma möglich sein
+      (Client-to-LAN).
+\item Die Firma besitzt eine öffentliche IP-Adresse, darüber müssen die Dienste
+      Webserver, Mailserver und VPN aus dem Internet erreichbar sein.
+\item Die DNS-Server befinden sich auf {\tt srv1} (Firmenintern) und
+      auf {\tt net1} (Internet).
+\end{itemize}
 
 \subsection{\fwa}
 
-Anforderungen, die sich anhand der generellen Anforderungen für FW1 ergeben
-
-- Verwendung von Connection Tracking
-  - Pakete, die zu einer bestehenden Verbindung gehören, werden akzeptiert
-  - Filterung der eingehenden Pakete um DMZ und LAN zu schützen
+Um diesen Anforderungen gerecht zu werden
+muss {\tt fw1} Connection Tracking verwenden.
+Dabei werden Pakete, die zu einer bestehenden Verbindung gehören, akzeptiert.
+Somit müssen nur Pakete, welche eine neue Verbindung aufbauen speziell betrachtet
+werden. Es findet also eine Filterung der eingehenden Pakete statt, um DMZ und internes Netzwerk (LAN) zu schützen.
+Desweiteren sind folgende Punkte umzusetzen:
 
 \paragraph{§ 1 Zugriff auf das Internet}
-- NAT/Masquerading (Pakete die ins Internet gehen enthalten nur öffentliche IP-Adresse der externen Firewall (10.1.0.131) für Pakete aus LAN und vom Server
-- Forwarding vom LAN zum Extranet
+\begin{itemize}
+\item NAT und Masquerading: Pakete,
+      die aus dem internen Netzwerk oder der DMZ ins Internet gehen,
+      enthalten als Quelladresse nur die öffentliche IP-Adresse der externen
+      Firewall (10.1.0.131).
+\item Diese Pakte müssen auch entsprechend geroutet werden.
+      (Forwarding- und Routing-Regeln)
+\end{itemize}
 
 \paragraph{§ 2 Mail- und Webserver}
-- eingehende Pakete an die entsprechenden Ports der öffentlichen IP-Adresse werden an srv1 weitergeleitet
-- dafür wird DNAT verwendet
-- SMTP (25), HTTP (80), HTTPS (443)
+\begin{itemize}
+\item Eingehende Pakete an die entsprechenden Ports der öffentlichen IP-Adresse werden an {\tt srv1} weitergeleitet.
+\item Dafür ist eine DNAT-Regel notwenig.
+\item Protokolle: HTTP (80), HTTPS (443), SMTP (25, 465), IMAP (143, 993).
+\end{itemize}
 
 \paragraph{§ 3 VPN}
-- VPN-Server befindet sich auf fw2
-- Weiterleitung + DNAT der Pakete (UDP-Ports 1194 und 1195)
+\begin{itemize}
+\item Der VPN-Server befindet sich auf {\tt fw2}.
+\item Weiterleitung der aus dem Internet eingehenden Pakete erfolgt mittels DNAT auf die UDP-Ports 1194 und 1195.
+\end{itemize}
 
 \paragraph{§ 4 DNS}
-- die Arbeitsplatzrechner im LAN verwenden srv1 für DNS-Anfragen
-- zur Auflösung von Hostnames aus dem Internet (zB. www.firma-b.f223), muss srv1 die DNS-Anfragen an net1 weiterleiten können (fw1 macht Forwarding der DNS-Pakete von srv1 zum Extranet, Masquerading greift hier natürlich auch)
-
+\begin{itemize}
+\item Die Arbeitsplatzrechner im LAN verwenden {\tt srv1} für DNS-Anfragen.
+\item Zur Auflösung von Hostnamen aus dem Internet (zB. www.firma-b.f223), muss {\tt srv1} die DNS-Anfragen an {\tt net1} weiterleiten können.
+\item {\tt fw1} macht Forwarding der DNS-Pakete von {\tt srv1} zum Extranet.
+\end{itemize}
 
 \subsection{\fwb}
 
-Anforderungen, welche sich anhand der generellen Anforderungen für FW2 ergeben
-
-- Schutz der Rechner im LAN
-- Zugriffe auf Rechner im LAN muss unterbunden werden
-- Pakete einer bestehenden Verbindung werden mittels Connection Tracking ebenfalls erlaubt
+Um diesen Anforderungen gerecht zu werden
+muss {\tt fw2} ebenfalls Connection Tracking verwenden.
+Hauptaufgabe der {\tt fw2} ist der Schutz der Rechner im internen Netzwerk
+der Firma.
 
 \paragraph{§ 1 Zugriff auf das Internet}
-- ausgehende Pakete aus dem LAN in Richtung des Extranets werden erlaubt
+\begin{itemize}
+\item Mitarbeiter erhalten Zugriff auf das Internet.
+\item Ausgehende Pakete aus dem LAN in Richtung des Extranets werden erlaubt.
+\end{itemize}
 
 \paragraph{§ 2 Mail- und Webserver}
-- Forwarding der Pakete an Mail- und Webserver
+\begin{itemize}
+\item Mail- und Webserver sollen auch aus dem internen Netzwer erreichbar sein.
+\item Forwarding der Pakete an Mail- und Webserver.
+\end{itemize}
 
 \paragraph{§ 3 VPN}
-- der VPN-Server läuft auf diesem Firewall Rechner
-- eingehende Pakete an die UDP-Ports 1194 und 1195 müssen erlaubt werden
-- Verwendung von virtuellen Netzwerkgeräten:
-- LAN-to-LAN
-  - Verwendung des Routing Modus von OpenVPN mittels TUN-Device
-  - TUN simuliert ein Point-to-Point-Netzwerkgerät, kommuniziert per IP-Paketen
-- Client-to-LAN
-  - Verwendung des Bridging Modus von OpenVPN mittels TAP-Device
-  - TAP simuliert ein Ethernet-Gerät und kommuniziert über Ethernet-Frames
-- TUN- und TAP-Adapter müssen jeweils bidirektional mit dem LAN kommunizieren können
+\begin{itemize}
+\item Der VPN-Server läuft auf diesem Firewall Rechner.
+\item Dafür müssen eingehende Pakete an die UDP-Ports 1194 und 1195 erlaubt werden.
+\item Verwendung von virtuellen Netzwerkgeräten:
+  \begin{itemize}
+  \item LAN-to-LAN:\\
+        Verwendung des Routing Modus von OpenVPN mittels TUN-Device,
+        welches ein Point-to-Point-Netzwerkgerät simuliert und per IP-Paketen
+        kommuniziert.
+  \item Client-to-LAN:\\
+        Verwendung des Bridging Modus von OpenVPN mittels TAP-Device,
+        welches ein Ethernet-Gerät simuliert und über Ethernet-Frames
+        kommuniziert.
+  \end{itemize}
+\item Der TUN- und der TAP-Adapter müssen jeweils bidirektional mit dem LAN kommunizieren können.
+\end{itemize}
 
 \paragraph{§ 4 DNS}
-- DNS-Anfragen der Arbeitsplatzrechner müssen an srv1 weitergeleitet werden
-
+\begin{itemize}
+\item Die DNS-Anfragen der Arbeitsplatzrechner müssen an {\tt srv1} weitergeleitet werden.
+\end{itemize}

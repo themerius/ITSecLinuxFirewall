@@ -1,5 +1,21 @@
 \section{Firewall Konfiguration}
 
+\newcommand{\lstfwa}[2]{
+\lstinputlisting[
+    firstline=#1,
+    lastline=#2,
+    firstnumber=#1
+]{code/firewall-external.sh}
+}
+
+\newcommand{\lstfwb}[2]{
+\lstinputlisting[
+    firstline=#1,
+    lastline=#2,
+    firstnumber=#1
+]{code/firewall-internal.sh}
+}
+
 Die Paketprüfung mit {\tt iptables} ist dreistufig aufgebaut.
 Hierarchisch von oben nach unten angeordnet gibt es die Tabellen, die Chains
 (Ketten) und die eigentlichen Filterregeln\footnote{
@@ -15,20 +31,26 @@ Folgende Chains existieren in den Linux {\tt iptables}:
 
 \begin{itemize}
 \item {\tt INPUT} --- betrifft Pakete, welche an einen lokalen Prozess gehen
-      sollen
-\item {\tt OUTPUT} --- betrifft Pakete, welche von einem lokalen Prozess stammen
-\item {\tt FORWARD} --- betrifft Pakete, welche geroutet werden
+      sollen.
+\item {\tt OUTPUT} --- betrifft Pakete, welche von einem lokalen Prozess stammen.
+\item {\tt FORWARD} --- betrifft Pakete, welche geroutet werden.
 \item {\tt PREROUTING} --- wird auf Pakete angewendet, bevor diese geroutet
-      werden (Element der {\tt nat} Tabelle)
+      werden (Element der {\tt nat} Tabelle).
 \item {\tt POSTROUTING} --- wird auf Pakete angewendet, nachdem diese geroutet
-      wurden (Element der {\tt nat} Tabelle)
+      wurden (Element der {\tt nat} Tabelle).
 \end{itemize}
 
 \noindent Die eigentlichen Regeln werden in einer Tabelle und Chain definiert,
 trifft eine Regel auf ein Paket zu, wird die in der Regel angegebene Aktion
 durchgeführt.
 Wenn keine Regel zutrifft, wird die allgemein gültige Policy angewendet.
-\\
+
+\begin{figure}[h!]
+  \centering
+    \includegraphics[width=0.99\textwidth]{figures/iptables-filter-nat.png}
+  \caption{Filter- und NAT-Tabelle von {\tt iptables}. Aus \cite{iptables} Abb. 5.13.}
+  \label{fig.iptables-filter-nat}
+\end{figure}
 
 \noindent Als grundsätzliche Konfiguration beider Firewalls wird die Policy für
 eingehende, ausgehende und weiterzuleitende Pakete auf {\tt DROP} gesetzt.
@@ -68,86 +90,74 @@ grundsätzlich erlaubt.
 ]{code/firewall-external.sh}
 
 
-\subsection{\fwa}
+\subsection{\fwa}\label{sec.konfig.fwa}
 
-Ist Firewall {\tt fw1} die zwischen \fwa sitzt.
-
-
-\subsubsection{Initialisierung}
-
-\paragraph{Anforderung} Grundlegende Initialisierung der Firewall, d.h.
-sie nimmt alle Pakete an. Zugriff auf Rechner innerhalb der DMZ ist ohne
-weitere Regeln jedoch \emph{nicht} möglich, also \emph{keine} Weiterreichung von
-Pakten.
-
-\paragraph{Konfiguration} Diese Konfigurationsdatei aus Listing \ref{lst:external}
-befindet sich in {\tt /etc/init.d/firewall-external.sh}.
+Die Konfigurationsdatei für {\tt fw1} aus Listing \ref{lst:external}
+befindet sich in\\
+{\tt /etc/init.d/firewall-external.sh}.
 Das Skript wird mit dem Befehl {\tt chmod u+x firewall-external.sh}
-ausführbar gemacht. Mit {\tt insserv firewall-external.sh}
+ausführbar gemacht und mit {\tt insserv firewall-external.sh}
 wird das Skript auch beim Aufstarten der Maschine automatisch ausgeführt,
 und damit die Firewall aktiviert.
 
-\lstinputlisting[
-    firstline=23,
-    lastline=28,
-    label=lst:forwardToSrv,
-    caption={Forwarding zu Ports als Funktion.}
-]{code/firewall-external.sh}
+\paragraph{§ 1 Zugriff auf das Internet}
 
-\paragraph{Test} Über die virtuelle Maschine {\tt lap1.internet.f223} wird
-via {\tt ping} getestet, ob eine Verbindung zwischen {\tt lap1} und {\tt fw1}
-möglich ist.
+\lstfwa{46}{47}
 
+\lstfwa{74}{79}
 
-\subsubsection{Weiterleitung auf Server}
+\paragraph{§ 2 Mail- und Webserver}
 
-\paragraph{Anforderung} Pakete sollten vom Extranet über die Firewall an
-den Web- und Mailserver {\tt srv1}, weitergeleitet werden.
-Es laufen HTTP auf Port 80, HTTPS auf Port 443 und SMTP auf Port 25.
+\lstfwa{23}{28}
 
-\paragraph{Konfiguration} Das Listing XYZ ist das Skript
-aus Listing XYZ, entsprechend erweitert.
-Es wird die Option {\tt DNAT} gewählt, womit das Ziel umgebogen wird.
-Die Firewall sieht von Außen nun aus wie der jeweilige Server.
+\lstfwa{66}{72}
 
+\paragraph{§ 3 VPN}
 
-\paragraph{Test} Über den Browser des Client-Rechner {\tt lap1},
-der sich im Extranet befindet.
+\lstfwa{85}{91}
 
+\paragraph{§ 4 DNS}
 
-\subsubsection{Masquerading}
+\lstfwa{81}{83}
 
-\paragraph{Anforderung}
-Dabei soll {\tt pc01} nach außen hin wirken wie wenn die Anfrage von
-{\tt fw1} kommt.
+\paragraph{§ 5 Sonstiges}
 
-Hier wird also der Rückkanal von {\tt fw1} zu {\tt pc01} gebildet.
+\lstfwa{63}{64}
 
-\paragraph{Konfiguration}
-
+\lstfwa{93}{99}
 
 \subsection{\fwb}
 
-Ist Firewall {\tt fw2} die zwischen \fwb sitzt.
+Die Konfigurationsdatei für {\tt fw2} aus Listing \ref{lst:internal}
+befindet sich in\\
+{\tt /etc/init.d/firewall-internal.sh} und wird mit den Befehlen
+aus Kapitel \ref{sec.konfig.fwa} ausführbar gemacht.
 
-\subsubsection{Verbindung von pc01 nach inet1}
+\paragraph{§ 1 Zugriff auf das Internet}
 
-\paragraph{Anforderung} Es soll eine Verbindung vom {\tt pc01} nach
-außen ins Extranet, also auf {\tt inet1}, möglich sein.
+\lstfwb{47}{48}
+\lstfwb{64}{65}
 
 
-\paragraph{Konfiguration}
-% Damit {\tt pc01} nach außen hin wie die externe Firewall
-% {\tt fw1} aussieht, muss die Option MASQUERADING genutzt werden.
+\paragraph{§ 2 Mail- und Webserver}
 
-Da {\tt fw2} nur weiterleitet, wird bei den stateful
-Regeln nur FORWARD benötigt.
+\lstfwb{24}{29}
+\lstfwb{74}{80}
 
-Es muss noch eine Route gesetzt werden, damit {\tt pc01} auch das Extranet
-auffinden kann.
+\paragraph{§ 3 VPN}
 
-\paragraph{Test} Funktioniert nur bei aktiven Masquerading bei {\tt fw1}.
-Dazu wird von {\tt pc01} auf den Webserver von {\tt net1} zugegriffen.
+\lstfwb{20}{22}
+\lstfwb{84}{92}
+
+\paragraph{§ 4 DNS}
+
+\lstfwb{81}{82}
+
+\paragraph{§ 5 Sonstiges}
+
+\lstfwb{67}{72}
+
+Protokollierung
 
 
 \section{Tests}\label{sec.tests}

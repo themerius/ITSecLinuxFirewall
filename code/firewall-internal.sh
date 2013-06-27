@@ -75,6 +75,9 @@ case "$1" in
         forwardToSrv  80 tcp  # http
         forwardToSrv 443 tcp  # https
         forwardToSrv  25 tcp  # smtp
+        forwardToSrv 465 tcp  # smtp (ssl)
+        forwardToSrv 143 tcp  # imap
+        forwardToSrv 993 tcp  # imap (ssl)
         forwardToSrv  53 tcp  # dns
         forwardToSrv  53 udp  # dns
 

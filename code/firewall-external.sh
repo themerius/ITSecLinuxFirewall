@@ -64,9 +64,12 @@ case "$1" in
         iptables -A INPUT -p icmp -m icmp --icmp-type 8 -m conntrack --ctstate NEW -j ACCEPT
 
         # port Forwarding from extranet
-        forwardToSrv  25  # smtp
         forwardToSrv  80  # http
         forwardToSrv 443  # https
+        forwardToSrv  25  # smtp
+        forwardToSrv 465  # smtp (ssl)
+        forwardToSrv 143  # imap
+        forwardToSrv 993  # imap (ssl)
 
         # masquerading for packets to extranet
         iptables -t nat -A POSTROUTING -o $EXT_DEV -s $SRV_IP  -j MASQUERADE
