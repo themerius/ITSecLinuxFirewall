@@ -102,12 +102,16 @@ und damit die Firewall aktiviert.
 
 \paragraph{§ 1 Zugriff auf das Internet}
 
+route add Befehl
 \lstfwa{46}{47}
 
+masquerade befehl
+forward befehl (allgemein kann auch -p tcp/udp/icmp bzw --dport enthalten)
 \lstfwa{74}{79}
 
 \paragraph{§ 2 Mail- und Webserver}
 
+prerouting befehl
 \lstfwa{23}{28}
 
 \lstfwa{66}{72}
@@ -122,8 +126,10 @@ und damit die Firewall aktiviert.
 
 \paragraph{§ 5 Sonstiges}
 
+input
 \lstfwa{63}{64}
 
+log
 \lstfwa{93}{99}
 
 \subsection{\fwb}
@@ -146,6 +152,7 @@ aus Kapitel \ref{sec.konfig.fwa} ausführbar gemacht.
 
 \paragraph{§ 3 VPN}
 
+dummy conf
 \lstfwb{20}{22}
 \lstfwb{84}{92}
 
@@ -227,5 +234,22 @@ up route add -net 192.168.30.0/24 gw 192.168.40.240
 \newpage
 \section{Zusammenfassung}
 
-TODO: Zusammenfassung
+In diesem Praktikumsversuch konnten wir lernen, wie man das Firewall-Konzept
+einer multiplen DMZ umsetzt. Dabei wurde die im Linux-Kernel vorhandene
+{\tt iptables} Technologie verwendet, wobei als Linux-Distribution Debian 6.0
+mit dem Codenamen „Squeeze“ zum Einsatz kam.
+\\ \\
+\noindent Das Labor ist als virtuelles Labor vorgesehen, d.h. sämtliche Rechner liegen
+als virtuelle Maschinen vor, was ein einfacheres Testen und Debuggen ermöglicht.
+Somit kann jede Gruppe autonom an ihrer Aufgabenstellung arbeiten.
+\\ \\
+\noindent Das Firewall-Konzept muss folgenden Anforderungen genügen:
 
+\begin{itemize}
+  \item Vom internen Netzwerk Zugriff auf das Internet.
+  \item Bestimmte Dienste in der DMZ sollen vom Internet aus erreichbar sein.
+  \item VPN-Zugriffe auf das interne Netzwerk sollen möglich sein.
+\end{itemize}
+
+\noindent Abschließend möchten wir uns bei Frau Dr. Düsterhöft für die
+kompetente und tatkräftige Laborbetreuung bedanken.
