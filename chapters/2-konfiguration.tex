@@ -160,24 +160,59 @@ aus Kapitel \ref{sec.konfig.fwa} ausführbar gemacht.
 Protokollierung
 
 
+\newpage
 \section{Tests}\label{sec.tests}
+
+\paragraph{§ 1 Zugriff auf das Internet, § 4 DNS}
+
+Mit dem {\tt pc01.firma-a.f223} wird via Webbrowser die Internetseite
+von {\tt net1.internet.f223} aufgerufen.
+Damit kann gezeigt werden:
+\begin{itemize}
+  \item DNS-Auflösung aus § 4 der Anforderungen des Hostnames funktioniert.
+  \item Ein unbeschränkter Zugriff aus dem internen Netzwerk ins Internet
+        ist möglich.
+  \item Das Masquerading funktioniert, da sonst keine Rückantwort möglich wäre,
+        weil das interne Netzwerk aus Sicht des Internets hinter der
+        öffentlichen IP-Adresse versteckt ist.
+\end{itemize}
+
+\noindent Grundsätzlich wurden alle Verbindungen mittels {\tt iptstate} analysiert.
+Für den oben angegebenen Testfall zeigen die Abbildungen
+\ref{fig.iptstate-extern} und \ref{fig.iptstate-intern} die existierenden
+Verbindungen an.
 
 \begin{figure}[h!]
   \centering
     \includegraphics[width=0.9\textwidth]{figures/iptstate-extern.png}
-  \caption{iptstate der externen Firewall.}
+  \caption{{\tt iptstate} der externen Firewall.}
   \label{fig.iptstate-extern}
 \end{figure}
 
 \begin{figure}[h!]
   \centering
     \includegraphics[width=0.9\textwidth]{figures/iptstate-intern.png}
-  \caption{iptstate der internen Firewall.}
+  \caption{{\tt iptstate} der internen Firewall.}
   \label{fig.iptstate-intern}
 \end{figure}
 
 
-\subsection{Netzwerkkonfiguration des Servers}
+\paragraph{§ 2 Mail- und Webserver}
+
+{\tt pc01.firma-a.f223} aus dem internen Netzwerk hat auf
+den Webserver von {\tt srv1.firma-a.f223} Zugriff.
+
+Der externe Zugriff auf Mail- und Webserver wird mit {\tt lap01.internet.f223}
+getestet.
+Dies zeigt, dass das Port-Forwarding von {\tt fw1} zu {\tt srv1}
+wie gewünscht funktioniert.
+
+\paragraph{§ 3 VPN}
+konnte nicht getestet werden, da auf dem neu aufgesetzten Firewall-Rechner
+{\tt fw2} kein VPN-Server konfiguriert ist.
+
+
+\subsection{Netzwerkkonfiguration von {\tt srv1}}
 
 Damit beim Zugriff von einem Rechner aus dem LAN auf den Server
 {\tt srv1} der \emph{Firma A} die Pakete direkt zurückgesendet werden und nicht
@@ -189,6 +224,7 @@ up route add -net 192.168.30.0/24 gw 192.168.40.240
 \end{verbatim}
 
 
+\newpage
 \section{Zusammenfassung}
 
 TODO: Zusammenfassung
