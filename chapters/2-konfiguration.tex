@@ -95,41 +95,85 @@ grundsätzlich erlaubt.
 Die Konfigurationsdatei für {\tt fw1} aus Listing \ref{lst:external}
 befindet sich in\\
 {\tt /etc/init.d/firewall-external.sh}.
-Das Skript wird mit dem Befehl {\tt chmod u+x firewall-external.sh}
-ausführbar gemacht und mit {\tt insserv firewall-external.sh}
+Das Skript wird mit dem Befehl\\
+{\tt chmod u+x firewall-external.sh}
+ausführbar gemacht und mit\\
+{\tt insserv firewall-external.sh}
 wird das Skript auch beim Aufstarten der Maschine automatisch ausgeführt,
 und damit die Firewall aktiviert.
 
 \paragraph{§ 1 Zugriff auf das Internet}
 
-route add Befehl
-\lstfwa{46}{47}
+Damit {\tt fw1} die Pakete zum LAN weiterleiten kann, wird mit dem folgenden
+Befehl eine Route zum LAN in die Routingtabelle eingetragen.
+Dabei wird {\tt fw2} als Gateway verwendet.
+\lstfwa{47}{47}
 
-masquerade befehl
-forward befehl (allgemein kann auch -p tcp/udp/icmp bzw --dport enthalten)
+\noindent Damit die zum Extranet gehenden Pakete die öffentliche IP-Adresse
+von Firma A enthalten, werden die Paketheader in der POSTROUTING Kette der
+{\tt nat} Tabelle umgeschrieben.
+Es werden die IP-Adressen von {\tt srv1} und die des gesamten LANs
+umgeschrieben.
+Mit dem FORWARD Befehl wird die Weiterleitung aller Verbindungen,
+welche aus dem LAN ins Extranet aufgebaut werden, erlaubt.
+
 \lstfwa{74}{79}
+
+\noindent Allgemein sieht der FORWARD Befehl folgendermaßen aus:
+
+\begin{verbatim}
+iptables -A FORWARD ... -m conntrack --ctstate NEW -j ACCEPT
+\end{verbatim}
+
+\noindent Statt {\tt ...} können folgende Parameter eingesetzt werden,
+mit denen sich die Verbindung spezifizieren lässt.
+
+\begin{itemize}
+  \item {\tt -i} gibt das Netzwerkinterface an, wo das Paket empfangen wird
+  \item {\tt -o} gitt das Netzwerkinterface an, über das das Paket gesendet werden soll
+  \item {\tt -s} gibt das Quellnetzwerk bzw. die Quell-IP-Adresse an
+  \item {\tt -d} gibt das Zielnetzwerk bzw. die Ziel-IP-Adresse an
+  \item {\tt -p / --dport} spezifiziert das Protokoll. Möglich sind dabei tcp, udp und icmp. Mit {\tt --dport} kann ein Zielport angegeben werden.
+\end{itemize}
 
 \paragraph{§ 2 Mail- und Webserver}
 
-prerouting befehl
+Da mehrere Ports zu {\tt srv1} weitergeleitet werden müssen, wurde folgende
+Shell-Funktion definiert.
+Die Ziel-IP-Adresse wird mit DNAT in der PREROUTING Kette modifiziert,
+die neue Ziel-IP-Adresse wird mit {\tt --to} am Ende des Befehls angegeben.
+Zusätzlich wird die Weiterleitung der so modifizierten Pakete erlaubt.
+
 \lstfwa{23}{28}
 
-\lstfwa{66}{72}
+\noindent Dies ist der Shell-Funktionsaufruf um die jeweilige Portfreigabe
+durchzuführen:
+
+\lstfwa{67}{72}
 
 \paragraph{§ 3 VPN}
+
+Für VPN wird ebenfalls Port-Forwarding verwendet, dieses Mal werden
+die Pakete jedoch an {\tt fw2} weitergeleitet.
 
 \lstfwa{85}{91}
 
 \paragraph{§ 4 DNS}
 
-\lstfwa{81}{83}
+Damit der interne DNS-Server auf {\tt srv1} DNS-Anfragen an {\tt net1}
+durch\-führen kann, wird diese Regel verwendet:
+
+\lstfwa{82}{83}
 
 \paragraph{§ 5 Sonstiges}
 
-input
-\lstfwa{63}{64}
+Zu Testzwecken wurden zudem eingehende Echo Requests (ping) erlaubt.
 
-log
+\lstfwa{64}{64}
+
+\noindent Alle Pakete, die nicht auf eine der bisherigen Regeln zutreffen,
+werden in einer Logdatei aufgezeichnet und verworfen.
+
 \lstfwa{93}{99}
 
 \subsection{\fwb}
@@ -141,30 +185,55 @@ aus Kapitel \ref{sec.konfig.fwa} ausführbar gemacht.
 
 \paragraph{§ 1 Zugriff auf das Internet}
 
-\lstfwb{47}{48}
-\lstfwb{64}{65}
+{\tt fw2} verwendet {\tt fw1} als Gateway zum Extranet.
+
+\lstfwb{48}{48}
+
+\noindent Alle Verbindungsaufbauten aus dem internen Netzwerk ins Extranet
+werden erlaubt.
+
+\lstfwb{65}{65}
 
 
 \paragraph{§ 2 Mail- und Webserver}
 
+Definition der Shell-Funktion:
+
 \lstfwb{24}{29}
-\lstfwb{74}{80}
+
+\noindent Die folgenden TCP Ports werden weitergeleitet:
+
+\lstfwb{75}{80}
 
 \paragraph{§ 3 VPN}
 
-dummy conf
-\lstfwb{20}{22}
+Definition der beiden VPN-Netzwerkadapter. Hier wurde nur eine Dummy Config
+verwendet, da kein VPN-Dienst konfiguriert ist.
+
+\lstfwb{21}{22}
+
+\noindent Es müssen die eingehenden Pakete an die UDP Ports 1194 und 1195
+erlaubt werden.
+Beidseitiger VPN-Verkehr wird zwischen dem jeweiligen VPN-Netzwerkadapter
+und dem internen Netzwerk gestattet.
+
 \lstfwb{84}{92}
 
 \paragraph{§ 4 DNS}
+
+Die Rechner aus dem internen Netzwerk erhalten Zugriff auf den DNS-Server
+von {\tt srv1}.
 
 \lstfwb{81}{82}
 
 \paragraph{§ 5 Sonstiges}
 
+Es werden die gleichen Logging-Regeln wie für {\tt fw1} verwendet.
+Für die Rechner aus dem internen Netzwerk wird
+ein Echo Request (ping) auf {\tt fw2}, {\tt fw1} und {\tt srv1} erlaubt.
+
 \lstfwb{67}{72}
 
-Protokollierung
 
 
 \newpage
